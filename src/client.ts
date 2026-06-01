@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 /** Per-request store holding the caller's ck_ bearer token. */
 export const tokenStore = new AsyncLocalStorage<string>();
 
-const API_BASE = (process.env.CLOUDCENMAX_API_BASE ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
+const API_BASE = (process.env.CLOUDCENMAX_API_BASE ?? "https://cloudcenmax.com").replace(/\/+$/, "");
 
 type Query = Record<string, string | number | undefined>;
 
