@@ -2,6 +2,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import express, { type Request, type Response } from "express";
 import { tokenStore } from "./client.js";
 import { createServer } from "./mcp.js";
+import { buildProtectedResourceMetadata } from "./well-known.js";
 
 const PORT = Number(process.env.PORT ?? 3399);
 const TOKEN_PREFIX = "ck_";
@@ -11,6 +12,10 @@ app.use(express.json());
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+app.get("/.well-known/oauth-protected-resource", (_req, res) => {
+  res.json(buildProtectedResourceMetadata());
 });
 
 /** Extracts the ck_ bearer token from the Authorization header, if present. */
@@ -35,6 +40,10 @@ function jsonRpcError(res: Response, status: number, message: string): void {
 app.post("/mcp", async (req: Request, res: Response) => {
   const token = bearerToken(req);
   if (!token) {
+    res.setHeader(
+      "WWW-Authenticate",
+      'Bearer resource_metadata="https://mcp.cloudcenmax.com/.well-known/oauth-protected-resource"',
+    );
     jsonRpcError(res, 401, "Missing API key. Send 'Authorization: Bearer ck_...'.");
     return;
   }

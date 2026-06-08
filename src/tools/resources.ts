@@ -31,7 +31,11 @@ export function registerResourceTools(server: McpServer): void {
     "provision_resource",
     {
       description:
-        "WRITE: Provision a new resource (server) from a catalog SKU. Requires a write-capable API key and sufficient balance (returns an insufficient-balance error otherwise).",
+        "WRITE: Provision a new resource (server) from a catalog SKU. Requires a write-capable API key and sufficient balance (returns an insufficient-balance error otherwise). " +
+        "Common provider-specific options (pass via the `options` object): " +
+        "`template` — OS template id (use list_os_templates to discover ids, e.g. \"ubuntu-22.04\"); " +
+        "`ssh_keys` — array of public SSH key strings to inject at first boot; " +
+        "`enable_ipv6` — boolean, attach a public IPv6 address at provision time.",
       inputSchema: {
         name: z.string().min(1).max(255).describe("Display name for the resource."),
         sku: z.string().describe("An active SKU code (see list_catalog)."),
