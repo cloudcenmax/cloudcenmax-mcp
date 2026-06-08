@@ -32,21 +32,38 @@ export function registerResourceTools(server: McpServer): void {
     {
       description:
         "WRITE: Provision a new resource (server) from a catalog SKU. Requires a write-capable API key and sufficient balance (returns an insufficient-balance error otherwise). " +
-        "Common provider-specific options (pass via the `options` object): " +
-        "`template` — OS template id (use list_os_templates to discover ids, e.g. \"ubuntu-22.04\"); " +
-        "`ssh_keys` — array of public SSH key strings to inject at first boot; " +
-        "`enable_ipv6` — boolean, attach a public IPv6 address at provision time.",
+        "The `template` parameter is REQUIRED — call list_os_templates first to get a valid id.",
       inputSchema: {
         name: z.string().min(1).max(255).describe("Display name for the resource."),
         sku: z.string().describe("An active SKU code (see list_catalog)."),
+        template: z
+          .string()
+          .min(1)
+          .describe(
+            "OS template id (required). Use list_os_templates to discover valid ids, e.g. \"ubuntu-22.04\".",
+          ),
+        ssh_keys: z
+          .array(z.string())
+          .optional()
+          .describe("Array of public SSH key strings to inject at first boot."),
+        enable_ipv6: z
+          .boolean()
+          .optional()
+          .describe("Attach a public IPv6 address at provision time."),
         options: z
           .record(z.unknown())
           .optional()
-          .describe("Provider-specific provisioning options (object)."),
+          .describe(
+            "Escape hatch for any other provider-specific options. Prefer the named parameters above when available.",
+          ),
       },
     },
-    ({ name, sku, options }) =>
-      run(() => callApi("POST", "/resources", { body: { name, sku, options } })),
+    ({ name, sku, template, ssh_keys, enable_ipv6, options }) => {
+      const mergedOptions: Record<string, unknown> = { ...(options ?? {}), template };
+      if (ssh_keys !== undefined) mergedOptions.ssh_keys = ssh_keys;
+      if (enable_ipv6 !== undefined) mergedOptions.enable_ipv6 = enable_ipv6;
+      return run(() => callApi("POST", "/resources", { body: { name, sku, options: mergedOptions } }));
+    },
   );
 
   server.registerTool(
